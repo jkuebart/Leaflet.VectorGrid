@@ -18,8 +18,12 @@
 
 	<script>
 
-		var map = L.map('map').fitWorld();
+// 		var map = L.map('map').fitWorld();
+		var map = L.map('map').setView({lat: 63.43089860278133, lng: 10.399675369262697}, 13);
+
 // 		var canvasRenderer = L.canvas();
+
+// https://free-2.tilehosting.com/data/v3/5/14/12.pbf.pict?key=UmmATPUongHdDmIicgs7
 
 		var token = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpbG10dnA3NzY3OTZ0dmtwejN2ZnUycjYifQ.1W5oTOnWXQ9R1w8u3Oo1yA';
 
@@ -27,7 +31,7 @@
 // 		var light   = L.layerGroup.mapbox('mapbox://styles/mapbox/light-v9', token);
 		var streets = L.layerGroup.mapbox('mapbox://styles/mapbox/streets-v9', token).addTo(map);
 // 		var sat     = L.layerGroup.mapbox('mapbox://styles/mapbox/satellite-v9', token);
-// 		var satstreet = L.layerGroup.mapbox('mapbox://styles/mapbox/satellite-street-v9', token);
+		var satstreet = L.layerGroup.mapbox('mapbox://styles/mapbox/satellite-streets-v9', token);
 // 		var bright  = L.layerGroup.mapbox('mapbox://styles/mapbox/bright-v9', token);
 // 		var basic   = L.layerGroup.mapbox('mapbox://styles/mapbox/basic-v9', token).addTo(map);
 
@@ -36,7 +40,7 @@
 // 			Light: light,
 			Streets: streets,
 // 			Satellite: sat,
-// 			'Satellite-Streets': satstreet
+			'Satellite-Streets': satstreet
 		}).addTo(map);
 
 	</script>

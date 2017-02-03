@@ -1,10 +1,13 @@
 import {} from './Leaflet.Renderer.SVG.Tile.js';
 
+import dimension from './featureDimension.js'
+
 L.VectorGrid = L.GridLayer.extend({
 
 	options: {
 		rendererFactory: L.svg.tile,
 		vectorTileLayerStyles: {},
+		defaultTileLayerStyle: L.Path.prototype.options,
 		interactive: false
 	},
 
@@ -35,13 +38,14 @@ L.VectorGrid = L.GridLayer.extend({
 
 		vectorTilePromise.then( function renderTile(vectorTile) {
 			for (var layerName in vectorTile.layers) {
+
 				var layer = vectorTile.layers[layerName];
 
 				/// NOTE: THIS ASSUMES SQUARE TILES!!!!!1!
 				var pxPerExtent = this.getTileSize().x / layer.extent;
 
 				var layerStyle = this.options.vectorTileLayerStyles[ layerName ] ||
-				L.Path.prototype.options;
+				this.options.defaultTileLayerStyle;
 
 				for (var i in layer.features) {
 					var feat = layer.features[i];
@@ -61,7 +65,10 @@ L.VectorGrid = L.GridLayer.extend({
 					}
 
 					if (styleOptions instanceof Function) {
-						styleOptions = styleOptions(feat.properties, coords.z);
+						styleOptions = styleOptions(feat.properties, coords.z, dimension(feat));
+// 						if (!styleOptions || styleOptions.length === 0) {
+// 							continue;
+// 						}
 					}
 
 					if (!(styleOptions instanceof Array)) {
@@ -75,9 +82,7 @@ L.VectorGrid = L.GridLayer.extend({
 					var featureLayer = this._createLayer(feat, pxPerExtent);
 
 					for (var j in styleOptions) {
-// 						console.log(j, styleOptions[j]);
-
-						var style = L.extend({}, L.Path.prototype.options, styleOptions[j]);
+						var style = L.extend({}, this.options.defaultTileLayerStyle, styleOptions[j]);
 						featureLayer.render(renderer, style);
 						renderer._addPath(featureLayer);
 					}

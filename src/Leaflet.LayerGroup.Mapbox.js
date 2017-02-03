@@ -2,7 +2,8 @@
 
 import {} from './Leaflet.VectorGrid.Protobuf';
 
-import mapboxFilterToFunc from './mapboxFilters';
+import normalize from './normalizeMapboxStyleFuncs.js';
+
 
 L.LayerGroup.Mapbox = L.LayerGroup.extend({
 	initialize: function(url, token, options) {
@@ -27,16 +28,17 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 // 			console.log(style);
 
 			// Convert the mapbox style def into one (or several) VectorGrid style defs
-			var vectorStyles = {};
-			var i, j, src, srclyr;
+			let vectorStyles = {};
+			let i, j, src, srclyr;
 
 			for (i in style.layers) {
-				var layer = style.layers[i];
-				var id = layer.id;
+				let layer = style.layers[i];
+				let id = layer.id;
+
 				src = layer.source;
 				srclyr = layer['source-layer'];
-				var opts;
-				var invisible = false;
+				let opts = {};
+				let invisible = false;
 
 				vectorStyles[src] = vectorStyles[src] || {};
 				vectorStyles[src][srclyr] = vectorStyles[src][srclyr] || [];
@@ -51,11 +53,12 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 					opts = {
 						fillColor:   layer.paint['fill-color']   || '#000000',
 						fillOpacity: layer.paint['fill-opacity'] || 1,
-						fill:      !!layer.paint['fill-opacity'],
+// 						fill:        layer.paint['fill-opacity'] > 0,
 						color:       layer.paint['fill-outline-color'],
 						opacity:     layer.paint['fill-outline-color'] ? (layer.paint['fill-opacity'] || 1) : 0,
 						weight:      layer.paint['fill-outline-color'] ? 1 : 0,
-						stroke:      layer.paint['fill-outline-color'] ? true : false,
+// 						stroke:      layer.paint['fill-outline-color'] > 0,
+						fill: true
 					}
 // 					opts = [];
 				} else if (layer.type === 'line') {
@@ -65,17 +68,8 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 						color:    layer.paint['line-color'] || 1,
 						opacity:  layer.paint['line-opacity'] || 1,
 						weight:   layer.paint['line-width'] || 1,
-						stroke: !!layer.paint['line-opacity'],
-					}
-
-					if (!(opts.weight instanceof Number)) {
-						opts.weight = 3;
-					}
-					if (!(opts.opacity instanceof Number)) {
-						opts.opacity = 1;
-					}
-					if (!(opts.color instanceof String)) {
-						opts.color = 'black';
+// 						stroke:   layer.paint['line-opacity'] > 0,
+						stroke: true
 					}
 
 // 					console.log(srclyr, opts, layer);
@@ -83,6 +77,10 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 					opts = {
 						opacity:  layer.paint['raster-opacity'] || 1,
 					}
+				} else {
+// 					console.log('Unhandled layer type', layer.type);
+// 					opts = {};
+					invisible = true;
 				}
 				/// TODO: Background, circle, symbol (marker), extrusion (fallback to fill)
 
@@ -90,7 +88,9 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 					opts.filter = layer.filter;
 				}
 
+
 				if (!invisible && opts) {
+					console.log(opts);
 					vectorStyles[src][srclyr].push(opts);
 				}
 			}
@@ -101,19 +101,29 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 			for (src in vectorStyles) {
 				for (srclyr in vectorStyles[src]) {
 
-					var hasFilter = false;
-					var lyropts = vectorStyles[src][srclyr];
+					let lyropts = vectorStyles[src][srclyr];
 
-					for (i=0; i<lyropts.length; i++) {
-						if (lyropts[i].filter) {
-							hasFilter = true;
-						}
+					if (lyropts.length) {
+						console.log(src, srclyr, lyropts);
+						vectorStyles[src][srclyr] = normalize(lyropts);
 					}
 
-					if (hasFilter) {
-						console.log('Source ', src, ', layer ', srclyr, ' with options ', lyropts, ' has filter(s)');
-						vectorStyles[src][srclyr] = mapboxFilterToFunc(lyropts);
-					}
+// 					for (i=0; i<lyropts.length; i++) {
+// 						if (lyropts[i].filter) {
+// // 							console.log(lyropts[i].filter,  mapboxFilterToFunc(lyropts[i].filter) );
+//
+// 							lyropts[i].filter = mapboxFilterToFunc(lyropts[i].filter);
+// 						}
+// 					}
+
+// 					if (hasFilter) {
+// 						console.log('Source ', src, ', layer ', srclyr, ' with options ', lyropts, ' has filter(s)', );
+// 						vectorStyles[src][srclyr] = mapboxFilterToFunc(lyropts);
+// 						vectorStyles[src][srclyr] = mapboxFilterToFunc(lyropts);
+// 						console.log( mapboxFilterToFunc(lyropts) );
+
+// 					}
+
 				}
 			}
 
@@ -136,7 +146,7 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 	},
 
 
-	_addProtobuf: function(url, options) {
+	_addProtobuf: function(url, options = {}) {
 		// URL is like mapbox://mapbox.mapbox-terrain-v2,mapbox.mapbox-streets-v7
 
 		// Request is like https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2,mapbox.mapbox-streets-v7.json?secure&access_token=((token))
@@ -153,14 +163,15 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 				}
 				options.attribution = json.attribution;
 				options.rendererFactory = L.canvas.tile,
+// 				options.rendererFactory = L.svg.tile,
+				options.defaultTileLayerStyle = {},
 
 				L.vectorGrid.protobuf(json.tiles, options).addTo(this);
 			}.bind(this));
 		}
-
 	},
 
-	_addRaster: function(url, options) {
+	_addRaster: function(url, options = {}) {
 		// URL is like mapbox://mapbox.satellite
 
 		// Request is https://api.mapbox.com/v4/mapbox.satellite.json?secure&access_token=((token))
@@ -175,6 +186,7 @@ L.LayerGroup.Mapbox = L.LayerGroup.extend({
 					json.tiles = json.tiles[0];
 				}
 				options.attribution = json.attribution;
+				options.zIndex = options.zIndex || -50;	// Push raster layers to the background
 
 				L.tileLayer(json.tiles, options).addTo(this);
 			}.bind(this));

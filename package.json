@@ -31,6 +31,7 @@
     "gobble": "^0.11.3",
     "gobble-cli": "^0.7.0",
     "gobble-rollup": "^0.36.0",
+    "mapbox-gl": "https://github.com/mapbox/mapbox-gl-js#745baa9ac3d7ba10522144c5273f6d422a906c70",
     "rollup-plugin-buble": "^0.14.0",
     "rollup-plugin-commonjs": "^5.0.5",
     "rollup-plugin-file-as-blob": "^1.1.2",

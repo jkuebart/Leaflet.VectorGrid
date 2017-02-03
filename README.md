@@ -104,7 +104,7 @@ A vector tile layer¹ can have several layers². In the `mapbox-streets-v6` vect
 * ¹ In leaflet
 * ² Groups of themed features
 
-Styling is done via per-layer² sets of `L.Path` options in the `vectorTileLayerStyles` layer¹ option:
+Styling is done via per-layer² sets of `L.Path` options in the `vectorTileLayerStyles` layer¹ option, as well as the `defaultTileLayerStyle` option:
 
 ```js
 
@@ -131,7 +131,11 @@ var vectorTileOptions = {
 		},
 
 		road: []
-	}
+	},
+
+	// Any layer² not defined in the previous option will take this style.
+	// If not specified, the `L.Path` defaults will be used.
+	defaultTileLayerStyle: L.Path.prototype.options
 };
 
 // Polylines and polygons can be styled exactly like normal Leaflet overlays, points can be styled like CircleMarkers.

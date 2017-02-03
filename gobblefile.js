@@ -120,10 +120,10 @@ var demo = gobble('demo').moveTo('demo');
 
 
 module.exports = gobble([
-	builtCode,          	// No extra deps, no minified
+// 	builtCode,          	// No extra deps, no minified
 	bundledCode,        	//    Extra deps, no minified
-	uglifiedCode,       	// No extra deps,    minified
-	uglifiedBundledCode,	//    Extra deps,    minified
+// 	uglifiedCode,       	// No extra deps,    minified
+// 	uglifiedBundledCode,	//    Extra deps,    minified
 
 	demo,
 // 	leaflet
